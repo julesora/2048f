@@ -2,7 +2,11 @@ export const directions = ['up', 'right', 'down', 'left'] as const
 export type Direction = (typeof directions)[number]
 export type Board = number[]
 export type Difficulty = 'easy' | 'medium' | 'hard'
-export const moveCounts: Record<Difficulty, number> = { easy: 4, medium: 5, hard: 6 }
+export const moveCounts: Record<Difficulty, number> = {
+  easy: 4,
+  medium: 5,
+  hard: 6,
+}
 export interface Puzzle {
   seed: string
   difficulty: Difficulty
@@ -13,7 +17,8 @@ export interface Puzzle {
 
 export function hash(text: string): number {
   let value = 2166136261
-  for (const char of text) value = Math.imul(value ^ char.charCodeAt(0), 16777619)
+  for (const char of text)
+    value = Math.imul(value ^ char.charCodeAt(0), 16777619)
   return value >>> 0
 }
 
@@ -49,15 +54,22 @@ export function slide(board: Board, direction: Direction): Board {
         i++
       } else merged.push(values[i])
     }
-    indices.forEach((index, offset) => { next[index] = merged[offset] ?? 0 })
+    indices.forEach((index, offset) => {
+      next[index] = merged[offset] ?? 0
+    })
   }
   return next
 }
 
-export function move(board: Board, direction: Direction, seed: string, step: number): Board | null {
+export function move(
+  board: Board,
+  direction: Direction,
+  seed: string,
+  step: number,
+): Board | null {
   const next = slide(board, direction)
   if (sameBoard(board, next)) return null
-  const empty = next.flatMap((value, index) => value === 0 ? [index] : [])
+  const empty = next.flatMap((value, index) => (value === 0 ? [index] : []))
   const rng = random(hash(`${seed}:spawn:${step}`))
   next[empty[Math.floor(rng() * empty.length)]] = rng() < 0.9 ? 2 : 4
   return next
@@ -67,7 +79,10 @@ export function replay(puzzle: Puzzle, moves: Direction[]): Board[] {
   const boards = [puzzle.start]
   moves.forEach((direction, step) => {
     const next = move(boards[boards.length - 1], direction, puzzle.seed, step)
-    if (!next) throw new Error('Sequence contains a move that does not change the board.')
+    if (!next)
+      throw new Error(
+        'Sequence contains a move that does not change the board.',
+      )
     boards.push(next)
   })
   return boards
@@ -79,10 +94,16 @@ export function createPuzzle(seed: string, difficulty: Difficulty): Puzzle {
   for (let attempt = 0; attempt < 20; attempt++) {
     const start = Array<number>(16).fill(0)
     for (let tile = 0; tile < 5; tile++) {
-      const empty = start.flatMap((value, index) => value === 0 ? [index] : [])
-      start[empty[Math.floor(rng() * empty.length)]] = tile === 0 ? 8 : rng() < 0.7 ? 2 : 4
+      const empty = start.flatMap((value, index) =>
+        value === 0 ? [index] : [],
+      )
+      start[empty[Math.floor(rng() * empty.length)]] =
+        tile === 0 ? 8 : rng() < 0.7 ? 2 : 4
     }
-    const endings = new Map<string, { board: Board; path: Direction[]; count: number }>()
+    const endings = new Map<
+      string,
+      { board: Board; path: Direction[]; count: number }
+    >()
     const visit = (board: Board, path: Direction[]) => {
       if (path.length === length) {
         const key = board.join(',')
@@ -101,7 +122,13 @@ export function createPuzzle(seed: string, difficulty: Difficulty): Puzzle {
     const unique = [...endings.values()].filter((ending) => ending.count === 1)
     if (unique.length) {
       const ending = unique[Math.floor(rng() * unique.length)]
-      return { seed, difficulty, start, target: ending.board, solution: ending.path }
+      return {
+        seed,
+        difficulty,
+        start,
+        target: ending.board,
+        solution: ending.path,
+      }
     }
   }
   throw new Error('Could not generate a unique puzzle.')

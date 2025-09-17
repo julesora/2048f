@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { createPuzzle, directions, move, replay, sameBoard, slide } from './engine'
+import {
+  createPuzzle,
+  directions,
+  move,
+  replay,
+  sameBoard,
+  slide,
+} from './engine'
 import type { Board, Difficulty } from './engine'
 
 const board = (row: number[]) => [...row, ...Array<number>(12).fill(0)]
@@ -15,7 +22,13 @@ describe('2048 rules', () => {
     expect(slide(board([2, 0, 2, 0]), 'right')).toEqual(board([0, 0, 0, 4]))
     const vertical = [2, 0, 0, 0, 2, 0, 0, 0, ...Array<number>(8).fill(0)]
     expect(slide(vertical, 'up')).toEqual(board([4, 0, 0, 0]))
-    expect(slide(vertical, 'down')).toEqual([...Array<number>(12).fill(0), 4, 0, 0, 0])
+    expect(slide(vertical, 'down')).toEqual([
+      ...Array<number>(12).fill(0),
+      4,
+      0,
+      0,
+      0,
+    ])
   })
   it('ignores no-op moves without spawning', () => {
     expect(move(board([2, 0, 0, 0]), 'left', 'test', 0)).toBeNull()
