@@ -1,3 +1,5 @@
+export const puzzleVersion = 2
+
 export const directions = ['up', 'right', 'down', 'left'] as const
 export type Direction = (typeof directions)[number]
 export type Board = number[]
@@ -69,9 +71,9 @@ export function move(
 ): Board | null {
   const next = slide(board, direction)
   if (sameBoard(board, next)) return null
-  const empty = next.flatMap((value, index) => (value === 0 ? [index] : []))
+  const empty = next.indexOf(0)
   const rng = random(hash(`${seed}:spawn:${step}`))
-  next[empty[Math.floor(rng() * empty.length)]] = rng() < 0.9 ? 2 : 4
+  next[empty] = rng() < 0.9 ? 2 : 4
   return next
 }
 
@@ -89,7 +91,7 @@ export function replay(puzzle: Puzzle, moves: Direction[]): Board[] {
 }
 
 export function createPuzzle(seed: string, difficulty: Difficulty): Puzzle {
-  const rng = random(hash(`${seed}:${difficulty}:v1`))
+  const rng = random(hash(`${seed}:${difficulty}:v${puzzleVersion}`))
   const length = moveCounts[difficulty]
   for (let attempt = 0; attempt < 20; attempt++) {
     const start = Array<number>(16).fill(0)

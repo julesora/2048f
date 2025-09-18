@@ -26,7 +26,7 @@ import {
   sameBoard,
 } from '../game/engine'
 import type { Difficulty, Direction, Puzzle } from '../game/engine'
-import { readProgress } from '../game/progress'
+import { progressKey, readProgress } from '../game/progress'
 import { today } from '../game/config'
 import { BoardView } from './BoardView'
 
@@ -65,10 +65,7 @@ export function Game({
 
   useEffect(() => {
     try {
-      localStorage.setItem(
-        `reverse-v1:${puzzle.seed}:${puzzle.difficulty}`,
-        JSON.stringify(progress),
-      )
+      localStorage.setItem(progressKey(puzzle), JSON.stringify(progress))
     } catch {
       /* Playing works without storage. */
     }
@@ -448,8 +445,8 @@ export function Game({
         </div>
         <div className="puzzle-bottom">
           <span>
-            <span className="seed-icon">✳</span>Nothing left to chance. Tile
-            spawns are always the same.
+            <span className="seed-icon">✳</span>New tiles fill the first empty
+            cell, scanning rows from the top left.
           </span>
           <button className="text-button" onClick={onHelp}>
             The rules <ArrowUpRight size={14} />

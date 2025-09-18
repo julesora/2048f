@@ -33,6 +33,25 @@ describe('2048 rules', () => {
   it('ignores no-op moves without spawning', () => {
     expect(move(board([2, 0, 0, 0]), 'left', 'test', 0)).toBeNull()
   })
+  it('spawns in the top-left cell when it is empty', () => {
+    const next = move(board([2, 2, 0, 0]), 'right', 'test', 0)!
+    expect([2, 4]).toContain(next[0])
+    expect(next.slice(1)).toEqual([0, 0, 4, ...Array<number>(12).fill(0)])
+  })
+  it('scans the top row before moving to the next row', () => {
+    const input = [2, 4, 0, 8, 16, 32, 64, 0, ...Array<number>(8).fill(0)]
+    const next = move(input, 'left', 'test', 0)!
+    expect(next.slice(0, 3)).toEqual([2, 4, 8])
+    expect([2, 4]).toContain(next[3])
+    expect(next.slice(4)).toEqual([16, 32, 64, 0, ...Array<number>(8).fill(0)])
+  })
+  it('skips a full top row without overwriting tiles', () => {
+    const input = [2, 4, 8, 16, 0, 0, 2, 2, ...Array<number>(8).fill(0)]
+    const next = move(input, 'right', 'test', 0)!
+    expect(next.slice(0, 4)).toEqual([2, 4, 8, 16])
+    expect([2, 4]).toContain(next[4])
+    expect(next.slice(5)).toEqual([0, 0, 4, ...Array<number>(8).fill(0)])
+  })
   it('spawns deterministically after a valid move', () => {
     const input = board([2, 2, 0, 0])
     const next = move(input, 'right', 'test', 0)!

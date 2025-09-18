@@ -37,6 +37,6 @@ The daily seed uses the UTC date. New puzzle creates a random seed.
 - `src/App.tsx`: page layout and rules.
 - `src/App.css`: responsive layout and tile styles.
 
-The generator explores every valid sequence at the selected length, then picks a target reached by exactly one sequence. The seed, difficulty, and move number make each puzzle repeatable. Spawns choose a seeded empty-cell index, so their positions can differ between paths.
+The generator explores every valid sequence at the selected length, then picks a target reached by exactly one sequence. The seed, difficulty, and move number make each puzzle repeatable. After each valid move, a tile spawns in the first empty cell, scanning left to right, top to bottom. Its value is seeded (90% 2, 10% 4). Rule changes use a new save version to avoid loading incompatible progress.
 
 Built with React, TypeScript, [Vite](https://vite.dev/guide/), [Motion](https://motion.dev/docs/react), and Lucide. No backend is needed. Fonts load from Google Fonts with local fallbacks.

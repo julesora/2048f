@@ -161,9 +161,10 @@ function App() {
                 move: 2 + 2 = 4. A new tile appears after each valid move.
               </li>
               <li>
-                <strong>Follow a fixed path.</strong> Spawns depend on the
-                puzzle seed and move number. Repeating a sequence always gives
-                the same board. Moves that do nothing don’t count.
+                <strong>Follow a fixed path.</strong> New tiles fill the first
+                empty cell, scanning left to right, top to bottom. Tile values
+                follow a fixed sequence for each puzzle. Moves that do nothing
+                don’t count.
               </li>
               <li>
                 <strong>Find the only solution.</strong> Match every tile and
