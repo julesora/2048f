@@ -4,7 +4,6 @@ import {
   ArrowRight,
   ArrowDown,
   ArrowLeft,
-  ArrowUpRight,
   Check,
   ChevronDown,
   CornerUpLeft,
@@ -14,7 +13,6 @@ import {
   Play,
   RotateCcw,
   Shuffle,
-  Sparkles,
   X,
 } from 'lucide-react'
 import {
@@ -87,7 +85,7 @@ export function Game({
       if (complete || preview) return
       const next = move(current, direction, puzzle.seed, moves.length)
       if (!next) {
-        setNotice('Those tiles cannot move that way. Try another direction.')
+        setNotice('No move that way.')
         return
       }
       setNotice('')
@@ -107,42 +105,6 @@ export function Game({
     setProgress((value) => ({ ...value, moves: value.moves.slice(0, -1) }))
   }, [])
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (
-        document.querySelector('dialog[open]') ||
-        event.ctrlKey ||
-        event.metaKey ||
-        event.altKey ||
-        (event.target instanceof HTMLElement &&
-          (event.target.isContentEditable ||
-            ['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target.tagName)))
-      )
-        return
-      const keys: Record<string, Direction> = {
-        ArrowUp: 'up',
-        ArrowRight: 'right',
-        ArrowDown: 'down',
-        ArrowLeft: 'left',
-        w: 'up',
-        d: 'right',
-        s: 'down',
-        a: 'left',
-      }
-      const direction = keys[event.key]
-      if (direction) {
-        event.preventDefault()
-        makeMove(direction)
-      }
-      if (event.key === 'Backspace' || event.key.toLowerCase() === 'z') {
-        event.preventDefault()
-        undo()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [makeMove, undo])
-
   function reset() {
     setPlaying(false)
     setCursor(null)
@@ -151,6 +113,7 @@ export function Game({
   }
 
   function hint() {
+    if (preview || solved) return
     const mismatch = moves.findIndex(
       (direction, index) => direction !== puzzle.solution[index],
     )
@@ -158,16 +121,81 @@ export function Game({
     if (step >= limit) return
     setNotice(
       mismatch >= 0
-        ? `Revisit move ${step + 1}: try ${puzzle.solution[step]}. Undo to that step to get back on track.`
-        : `A little nudge: move ${step + 1} is ${puzzle.solution[step]}.`,
+        ? `Revisit move ${step + 1}: try ${puzzle.solution[step]}. Undo to that step.`
+        : `Next move: move ${step + 1} is ${puzzle.solution[step]}.`,
     )
     setProgress((value) => ({ ...value, hints: value.hints + 1 }))
   }
 
+  function toggleReplay() {
+    if (preview) {
+      setPlaying(false)
+      setCursor(null)
+    } else if (moves.length) {
+      setCursor(0)
+      setPlaying(true)
+    }
+  }
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.repeat ||
+        document.querySelector('dialog[open]') ||
+        (event.target instanceof HTMLElement &&
+          (event.target.isContentEditable ||
+            ['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target.tagName)))
+      )
+        return
+      const key = event.key.toLowerCase()
+      if (event.altKey) return
+      if (event.ctrlKey || event.metaKey) {
+        if (key === 'z' && !event.shiftKey) {
+          event.preventDefault()
+          undo()
+        }
+        return
+      }
+      const keys: Record<string, Direction> = {
+        arrowup: 'up',
+        arrowright: 'right',
+        arrowdown: 'down',
+        arrowleft: 'left',
+        w: 'up',
+        d: 'right',
+        s: 'down',
+        a: 'left',
+      }
+      const actions: Record<string, () => void> = {
+        z: undo,
+        backspace: undo,
+        r: reset,
+        h: hint,
+        p: toggleReplay,
+        n: onNew,
+        '?': onHelp,
+        escape: () => {
+          setPlaying(false)
+          setCursor(null)
+        },
+      }
+      if (keys[key]) {
+        event.preventDefault()
+        makeMove(keys[key])
+      } else if (actions[key]) {
+        event.preventDefault()
+        actions[key]()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
   async function share() {
     try {
       await navigator.clipboard.writeText(window.location.href)
-      setNotice('Puzzle link copied. Same board, same challenge.')
+      setNotice('Puzzle link copied.')
     } catch {
       setNotice('Copy the address in your browser to share this exact puzzle.')
     }
@@ -179,7 +207,7 @@ export function Game({
         <div className="puzzle-toolbar">
           <div className="puzzle-name">
             <span className="status-dot" />
-            <strong>{daily ? 'The daily sequence' : 'A fresh sequence'}</strong>
+            <strong>{daily ? 'Daily puzzle' : 'Puzzle'}</strong>
             <span className="puzzle-id">
               #{hash(puzzle.seed).toString(16).slice(0, 5).toUpperCase()}
             </span>
@@ -207,11 +235,11 @@ export function Game({
               <ChevronDown size={14} />
             </div>
             <button
-              className="icon-button"
+              className="help-button"
               aria-label="Copy puzzle link"
               onClick={share}
             >
-              <Link size={17} />
+              <Link size={17} /> Share
             </button>
           </div>
         </div>
@@ -237,12 +265,6 @@ export function Game({
                   label="Your board"
                   onSwipe={makeMove}
                 />
-                <div className="board-caption">
-                  <span className="small-square" />
-                  {preview
-                    ? 'A look back at your sequence'
-                    : 'Slide the tiles. Follow the possibilities.'}
-                </div>
               </div>
               <div className="board-bridge">
                 <ArrowRight size={19} />
@@ -256,10 +278,6 @@ export function Game({
                   <span className="target-tag">Match this</span>
                 </div>
                 <BoardView board={puzzle.target} label="Target board" target />
-                <div className="board-caption">
-                  <span className="small-square target-square" />
-                  Same tiles. Exact positions.
-                </div>
               </div>
             </div>
             <div className="sequence-panel">
@@ -306,23 +324,13 @@ export function Game({
                 <Flag className="sequence-flag" size={18} />
               </div>
               <div className="sequence-footer">
-                <span>
-                  {preview
-                    ? 'Viewing your moves. Return to live to keep playing.'
-                    : 'Every move counts. Make them yours.'}
-                </span>
+                <span>{preview ? `Step ${cursor} / ${moves.length}` : ''}</span>
                 <button
                   className="text-button"
                   disabled={!moves.length && !preview}
-                  onClick={() => {
-                    if (preview) {
-                      setPlaying(false)
-                      setCursor(null)
-                    } else {
-                      setCursor(0)
-                      setPlaying(true)
-                    }
-                  }}
+                  aria-label={preview ? 'Back to live' : 'Replay'}
+                  aria-keyshortcuts="p"
+                  onClick={toggleReplay}
                 >
                   {preview ? (
                     <>
@@ -333,33 +341,15 @@ export function Game({
                       <Play size={12} /> Replay
                     </>
                   )}
+                  <kbd aria-hidden="true">P</kbd>
                 </button>
               </div>
             </div>
           </div>
           <aside className="control-panel">
-            <div className="move-badge">
-              <Sparkles size={15} /> ONE SOLUTION. {limit} MOVES.
-            </div>
             <h2>
-              {solved
-                ? 'Beautifully solved.'
-                : complete
-                  ? 'Another way awaits.'
-                  : 'Make your move.'}
+              {solved ? 'Solved.' : complete ? 'Not a match.' : 'Your move'}
             </h2>
-            <p>
-              {solved ? (
-                'You found the exact sequence. A little logic goes a long way.'
-              ) : complete ? (
-                'Not quite the target. Undo a move or start fresh to try a different path.'
-              ) : (
-                <>
-                  Recreate the target in exactly <strong>{limit} moves.</strong>{' '}
-                  Can you find the only way there?
-                </>
-              )}
-            </p>
             <div className={`direction-pad ${solved ? 'solved-pad' : ''}`}>
               {solved ? (
                 <div className="solved-icon">
@@ -388,7 +378,7 @@ export function Game({
                 `${attempts} ${attempts === 1 ? 'attempt' : 'attempts'} · ${hints} ${hints === 1 ? 'hint' : 'hints'} used`
               ) : (
                 <>
-                  Use arrow keys or <kbd>W</kbd>
+                  ↑ ↓ ← → / <kbd>W</kbd>
                   <kbd>A</kbd>
                   <kbd>S</kbd>
                   <kbd>D</kbd>
@@ -399,29 +389,44 @@ export function Game({
               <button
                 className="secondary-button"
                 disabled={!moves.length}
+                aria-label="Undo"
+                aria-keyshortcuts="z Backspace Control+z Meta+z"
                 onClick={undo}
               >
                 <CornerUpLeft size={16} />
-                Undo
+                Undo <kbd aria-hidden="true">Z</kbd>
               </button>
               <button
                 className="secondary-button"
                 disabled={!moves.length}
+                aria-label="Reset"
+                aria-keyshortcuts="r"
                 onClick={reset}
               >
                 <RotateCcw size={15} />
-                Reset
+                Reset <kbd aria-hidden="true">R</kbd>
               </button>
             </div>
             {solved ? (
-              <button className="hint-button" onClick={onNew}>
+              <button
+                className="hint-button"
+                aria-keyshortcuts="n"
+                onClick={onNew}
+              >
                 <Shuffle size={17} />
-                Try another puzzle
+                Next puzzle
                 <ArrowRight size={16} />
               </button>
             ) : (
-              <button className="hint-button" onClick={hint} disabled={preview}>
-                <Lightbulb size={17} />A little hint<span>↗</span>
+              <button
+                className="hint-button"
+                aria-label="Hint"
+                aria-keyshortcuts="h"
+                onClick={hint}
+                disabled={preview}
+              >
+                <Lightbulb size={17} />
+                Hint<kbd aria-hidden="true">H</kbd>
               </button>
             )}
             <div
@@ -430,37 +435,27 @@ export function Game({
               aria-live="polite"
             >
               {notice ||
-                (solved ? (
-                  'Perfect match. Every tile is in its place.'
-                ) : complete ? (
-                  'The boards don’t match yet. You can keep trying.'
-                ) : (
-                  <>
-                    <span className="notice-dot" />
-                    No timer. Just you and the puzzle.
-                  </>
-                ))}
+                (solved
+                  ? 'Exact match.'
+                  : complete
+                    ? 'Undo or reset to try again.'
+                    : '')}
             </div>
           </aside>
         </div>
         <div className="puzzle-bottom">
-          <span>
-            <span className="seed-icon">✳</span>New tiles fill the first empty
-            cell, scanning rows from the top left.
-          </span>
-          <button className="text-button" onClick={onHelp}>
-            The rules <ArrowUpRight size={14} />
+          <span>Spawns: first empty cell from top left.</span>
+          <button
+            className="text-button new-puzzle"
+            aria-label="New puzzle"
+            aria-keyshortcuts="n"
+            onClick={onNew}
+          >
+            <Shuffle size={15} />
+            New puzzle<kbd aria-hidden="true">N</kbd>
           </button>
         </div>
       </section>
-      <div className="below-puzzle">
-        <span>A familiar game. A different kind of thinking.</span>
-        <button className="text-button new-puzzle" onClick={onNew}>
-          <Shuffle size={15} />
-          New puzzle
-          <ArrowRight size={15} />
-        </button>
-      </div>
     </>
   )
 }

@@ -25,9 +25,7 @@ test('solves the unique sequence, persists progress, and replays', async ({
     await page
       .getByRole('button', { name: `Move ${direction}`, exact: true })
       .click()
-  await expect(
-    page.getByRole('heading', { name: 'Beautifully solved.' }),
-  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Solved.' })).toBeVisible()
   const current = await page
     .getByRole('group', { name: 'Your board', exact: true })
     .locator('.cell')
@@ -48,7 +46,7 @@ test('solves the unique sequence, persists progress, and replays', async ({
 test('supports undo, reset, hints and timeline inspection', async ({
   page,
 }) => {
-  await page.getByRole('button', { name: 'A little hint' }).click()
+  await page.getByRole('button', { name: 'Hint' }).click()
   await expect(page.getByRole('status')).toContainText(
     `move 1 is ${puzzle.solution[0]}`,
   )
@@ -91,12 +89,12 @@ test('rejects an incorrect full sequence and allows recovery', async ({
       .getByRole('button', { name: `Move ${direction}`, exact: true })
       .click()
   await expect(
-    page.getByRole('heading', { name: 'Another way awaits.' }),
+    page.getByRole('heading', { name: 'Not a match.' }),
   ).toBeVisible()
   await expect(
     page.getByRole('button', { name: 'Move up', exact: true }),
   ).toBeDisabled()
-  await page.getByRole('button', { name: 'A little hint' }).click()
+  await page.getByRole('button', { name: 'Hint' }).click()
   await expect(page.getByRole('status')).toContainText('Revisit move')
   await page.getByRole('button', { name: 'Undo', exact: true }).click()
   await expect(
@@ -111,7 +109,7 @@ test('changes difficulty, generates a new puzzle, and shares its URL', async ({
   await context.grantPermissions(['clipboard-read', 'clipboard-write'])
   await page.getByRole('combobox', { name: 'Difficulty' }).selectOption('hard')
   await expect(page).toHaveURL(/level=hard/)
-  await expect(page.getByText('ONE SOLUTION. 6 MOVES.')).toBeVisible()
+  await expect(page.getByText('One sequence. Exactly 6 moves.')).toBeVisible()
   await page.getByRole('button', { name: 'New puzzle', exact: true }).click()
   expect(new URL(page.url()).searchParams.get('puzzle')).not.toBe(seed)
   await page.getByRole('button', { name: 'Copy puzzle link' }).click()
@@ -122,7 +120,7 @@ test('changes difficulty, generates a new puzzle, and shares its URL', async ({
 })
 
 test('rules trap focus and stop gameplay keyboard input', async ({ page }) => {
-  await page.getByRole('button', { name: 'How to play' }).click()
+  await page.getByRole('button', { name: 'Controls', exact: true }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await page.keyboard.press('ArrowDown')
   await page.keyboard.press('Escape')
@@ -180,4 +178,54 @@ test('has no serious accessibility violations', async ({ page }) => {
       })),
     })),
   ).toEqual([])
+})
+
+test('keyboard shortcuts mirror buttons and respect focused controls', async ({
+  page,
+}) => {
+  const keys = { up: 'w', right: 'd', down: 's', left: 'a' }
+  await page.keyboard.press(keys[puzzle.solution[0]].toUpperCase())
+  await expect(page.getByText('Move 1 of 5', { exact: true })).toBeVisible()
+  await page.keyboard.press('Control+z')
+  await expect(page.getByText('Start here', { exact: true })).toBeVisible()
+  await page.keyboard.press('h')
+  await expect(page.getByRole('status')).toContainText(
+    `move 1 is ${puzzle.solution[0]}`,
+  )
+  await page.keyboard.press(keys[puzzle.solution[0]])
+  await page.keyboard.press('p')
+  await expect(
+    page.getByRole('button', { name: 'Back to live', exact: true }),
+  ).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(
+    page.getByRole('button', { name: 'Replay', exact: true }),
+  ).toBeVisible()
+  await page.keyboard.press('r')
+  await expect(page.getByText('Start here', { exact: true })).toBeVisible()
+  await page.keyboard.press('?')
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.keyboard.press('n')
+  expect(new URL(page.url()).searchParams.get('puzzle')).toBe(seed)
+  await page.keyboard.press('Escape')
+  await page.getByRole('combobox', { name: 'Difficulty' }).focus()
+  await page.keyboard.press('n')
+  expect(new URL(page.url()).searchParams.get('puzzle')).toBe(seed)
+  await page.getByRole('combobox', { name: 'Difficulty' }).blur()
+  await page.keyboard.press('n')
+  expect(new URL(page.url()).searchParams.get('puzzle')).not.toBe(seed)
+})
+
+test('held shortcuts do not repeat and space still activates buttons', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: 'Hint', exact: true }).focus()
+  await page.keyboard.press('Space')
+  await expect(page.getByRole('status')).toContainText('Next move:')
+  await page.evaluate(() =>
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'n', repeat: true, bubbles: true }),
+    ),
+  )
+  expect(new URL(page.url()).searchParams.get('puzzle')).toBe(seed)
 })

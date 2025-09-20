@@ -23,7 +23,9 @@ npm run test:e2e    # Desktop and mobile browser tests
 
 - Slide with arrows, WASD, buttons, or swipes. Equal tiles merge once per move.
 - Match the target in 4, 5, or 6 moves. No-op moves do not count.
-- Undo with Z or Backspace. Inspect or replay the move timeline.
+- Z / Backspace / Ctrl+Z / Cmd+Z: undo. R: reset. H: hint.
+- P: replay or return. Escape: exit replay. N: new puzzle. ?: controls.
+- Click a timeline step to inspect it. Shortcuts pause in menus and dialogs.
 - Hints reveal the next correct move or your first wrong turn.
 - Progress saves locally. Copy the puzzle link to share the same challenge.
 
