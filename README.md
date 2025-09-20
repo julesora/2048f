@@ -1,44 +1,39 @@
 # 2048 / reverse
 
-Find the exact move sequence that turns a starting board into a target.
+Find the unique move sequence that matches the target.
 
-## Run
+[Play](https://julesora.github.io/2048f/)
 
-Requires Node 22.12+ (or 20.19+).
+## Develop
+
+Node 24 and npm.
 
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 
+## Check
+
 ```sh
-npm test            # Engine tests
+npm test
 npm run lint
-npm run build       # Static site in dist/
+npm run build
 npx playwright install chromium
-npm run test:e2e    # Desktop and mobile browser tests
+npm run test:e2e
 ```
 
-## Play
+## Controls
 
-- Slide with arrows, WASD, buttons, or swipes. Equal tiles merge once per move.
-- Match the target in 4, 5, or 6 moves. No-op moves do not count.
-- Z / Backspace / Ctrl+Z / Cmd+Z: undo. R: reset. H: hint.
-- P: replay or return. Escape: exit replay. N: new puzzle. ?: controls.
-- Click a timeline step to inspect it. Shortcuts pause in menus and dialogs.
-- Hints reveal the next correct move or your first wrong turn.
-- Progress saves locally. Copy the puzzle link to share the same challenge.
+Arrows / WASD: move. Z: undo. R: reset. H: hint. P: replay.
+Escape: exit replay. N: new puzzle. ?: controls.
 
-The daily seed uses the UTC date. New puzzle creates a random seed.
+Tiles spawn in the first empty cell, left to right, top to bottom.
+Values are seeded. Each puzzle has one solution in 4–6 moves.
+Progress saves locally; the daily seed uses UTC.
 
-## Structure
+## Deploy
 
-- `src/game/engine.ts`: pure moves, seeded spawns, and puzzle generation.
-- `src/components/`: game controls, board visualizer, and move timeline.
-- `src/game/progress.ts`: validated local progress.
-- `src/App.tsx`: page layout and rules.
-- `src/App.css`: responsive layout and tile styles.
+Push to `main` to deploy through GitHub Actions. Pages serves `dist/` at `/2048f/`.
 
-The generator explores every valid sequence at the selected length, then picks a target reached by exactly one sequence. The seed, difficulty, and move number make each puzzle repeatable. After each valid move, a tile spawns in the first empty cell, scanning left to right, top to bottom. Its value is seeded (90% 2, 10% 4). Rule changes use a new save version to avoid loading incompatible progress.
-
-Built with React, TypeScript, [Vite](https://vite.dev/guide/), [Motion](https://motion.dev/docs/react), and Lucide. No backend is needed. Fonts load from Google Fonts with local fallbacks.
+React, TypeScript, Vite, Motion, and Lucide. No backend.
