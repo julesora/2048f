@@ -32,8 +32,4 @@ Tiles spawn in the first empty cell, left to right, top to bottom.
 Values are seeded. Each puzzle has one solution in 4–6 moves.
 Progress saves locally; the daily seed uses UTC.
 
-## Deploy
-
-Push to `main` to deploy through GitHub Actions. Pages serves `dist/` at `/2048f/`.
-
 React, TypeScript, Vite, Motion, and Lucide. No backend.
