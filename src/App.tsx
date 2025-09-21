@@ -40,7 +40,7 @@ function App() {
           <a
             className="brand"
             href={import.meta.env.BASE_URL}
-            aria-label="2048 Reverse home"
+            aria-label="2048f home"
           >
             <span className="brand-mark" aria-hidden="true">
               <i />
@@ -48,10 +48,7 @@ function App() {
               <i />
               <i />
             </span>
-            <span>
-              2048<span className="brand-divider">/</span>
-              <span className="brand-name">reverse</span>
-            </span>
+            <span>2048f</span>
           </a>
           <button
             className="help-button"

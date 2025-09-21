@@ -1,6 +1,6 @@
-# 2048 / reverse
+# 2048f
 
-Find the unique move sequence that matches the target.
+Find the moves. Match the target.
 
 [Play](https://julesora.github.io/2048f/)
 
